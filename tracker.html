@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10-Week Java Backend SDE Progress Cockpit</title>
+    <!-- Tailwind CSS for high-performance styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .circular-progress {
+            background: conic-gradient(#6366f1 0deg, #1e293b 0deg);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col antialiased pb-12">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 px-4 py-4 sm:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        SDE Placement Cockpit <span class="text-xs bg-indigo-500/20 text-indigo-400 font-semibold px-2.5 py-0.5 rounded-full border border-indigo-500/30">Java Backend</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5">Automated tracker for 10-Week Executive Blueprint (Ends 29 July 2026)</p>
+                </div>
+            </div>
+
+            <!-- Countdown and Export/Import Utilities -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl px-4 py-2 flex items-center gap-3">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs text-slate-300 font-medium">Vacation Countdown: <span id="days-countdown" class="text-emerald-400 font-bold text-sm">--</span> Days Remaining</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportData()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 hover:text-white transition-all text-xs flex items-center gap-1.5" title="Export Progress JSON">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export Progress
+                    </button>
+                    <label class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 hover:text-white transition-all text-xs flex items-center gap-1.5 cursor-pointer" title="Import Progress JSON">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        Import Backup
+                        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                    </label>
+                    <button onclick="openResetModal()" class="p-2 bg-red-950/40 hover:bg-red-900/40 text-red-400 rounded-lg border border-red-800/40 transition-all text-xs" title="Reset All Progress">
+                        Clear Workspace
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Sidebar - Focus Center, Reminders, and Statistics -->
+        <section class="lg:col-span-4 space-y-6">
+            
+            <!-- GOOGLE CALENDAR AUTOMATION SYNC PANEL -->
+            <div class="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl"></div>
+                <div class="flex items-center gap-2.5 mb-3">
+                    <div class="p-2 bg-indigo-600 rounded-lg text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Google Calendar Sync</h3>
+                        <p class="text-[11px] text-indigo-300">Automate your active study block windows</p>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800/60 mb-4 space-y-2 text-xs">
+                    <div class="flex justify-between"><span class="text-slate-400">🌅 DSA Block:</span> <span class="text-slate-200 font-semibold">9:00 AM - 11:00 AM</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">💻 Backend Block:</span> <span class="text-slate-200 font-semibold">2:00 PM - 5:00 PM</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">🔄 Review Block:</span> <span class="text-slate-200 font-semibold">8:00 PM - 9:00 PM</span></div>
+                </div>
+
+                <button onclick="generateCalendarICS()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white rounded-xl font-bold text-xs transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Generate & Sync Calendar File (.ics)
+                </button>
+                <p class="text-[10px] text-slate-400 text-center mt-2">Generates a standard batch calendar script running until 29 July 2026.</p>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4">Overall Roadmap Progress</h3>
+                
+                <div class="flex items-center gap-5">
+                    <div class="relative flex-shrink-0 w-24 h-24 rounded-full flex items-center justify-center circular-progress" id="radial-progress-container">
+                        <div class="absolute w-20 h-20 bg-slate-900 rounded-full flex flex-col items-center justify-center">
+                            <span class="text-2xl font-black text-white" id="progress-percentage-text">0%</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Done</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 flex-grow">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-400">Total Tasks Completed</span>
+                                <span class="font-bold text-white" id="checked-tasks-count">0/210</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="overall-progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700/30 text-center">
+                                <span class="block text-[10px] uppercase font-bold text-indigo-400 tracking-wide">DSA Tracks</span>
+                                <span class="text-sm font-bold text-slate-200" id="dsa-progress-text">0%</span>
+                            </div>
+                            <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700/30 text-center">
+                                <span class="block text-[10px] uppercase font-bold text-emerald-400 tracking-wide">Backend Tracks</span>
+                                <span class="text-sm font-bold text-slate-200" id="backend-progress-text">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase Quick Check -->
+                <div class="mt-5 space-y-2 pt-4 border-t border-slate-800/80">
+                    <span class="text-xs font-semibold text-slate-400 block mb-2">Phase Milestones Status</span>
+                    <div id="phases-status-list" class="space-y-1.5 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- Block Timer Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center justify-between">
+                    <span>Block Focus Timer</span>
+                    <span class="bg-slate-800 text-[10px] px-2 py-0.5 rounded-md font-mono text-indigo-300 border border-slate-700" id="timer-active-label">Idle</span>
+                </h3>
+
+                <div class="flex flex-col items-center py-2">
+                    <div class="text-4xl font-black font-mono tracking-widest text-white mb-4" id="timer-display">02:00:00</div>
+                    
+                    <div class="flex items-center gap-2 mb-4 w-full justify-center">
+                        <button onclick="setTimerPreset(120, 'DSA Session')" class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-indigo-950 text-indigo-400 hover:bg-indigo-900 border border-indigo-800 transition-colors">DSA Block (2h)</button>
+                        <button onclick="setTimerPreset(180, 'Backend Session')" class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-emerald-950 text-emerald-400 hover:bg-emerald-900 border border-emerald-800 transition-colors">Backend (3h)</button>
+                        <button onclick="setTimerPreset(60, 'Review Session')" class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-amber-950 text-amber-400 hover:bg-amber-900 border border-amber-800 transition-colors">Review (1h)</button>
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full">
+                        <button id="timer-toggle-btn" onclick="toggleTimer()" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white rounded-lg font-semibold text-sm transition-all shadow-md">Start Focus</button>
+                        <button onclick="resetTimer()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors text-sm font-medium border border-slate-700">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Reminder Center -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Custom Reminder Hub</h3>
+                    <button onclick="openReminderModal()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        Add Custom
+                    </button>
+                </div>
+                <div id="reminders-list" class="space-y-2.5 max-h-[190px] overflow-y-auto pr-1"></div>
+            </div>
+
+        </section>
+
+        <!-- Right Main Panel - Course Resources, Capstones & Day Checklist Grid -->
+        <section class="lg:col-span-8 space-y-6">
+
+            <!-- Global Capstone Project Progress tracker -->
+            <div class="bg-gradient-to-br from-indigo-950/30 to-slate-900 border border-indigo-900/30 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-300 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Resume-Defining Capstones Progression
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">Capstone 1</span>
+                            <h4 class="font-bold text-sm text-white mt-1">E-Commerce Microservices</h4>
+                            <p class="text-xs text-slate-400 mt-1">API Gateway, Kafka dynamic channels, Resilience4j, Multi-stage Docker optimization loops.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">Target Week: W7 - W8</span>
+                            <input type="checkbox" id="capstone-1-check" onchange="toggleCapstone(1)" class="w-4 h-4 text-indigo-600 bg-slate-800 rounded border-slate-700">
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wide">Capstone 2</span>
+                            <h4 class="font-bold text-sm text-white mt-1">Semantic Document Ingest</h4>
+                            <p class="text-xs text-slate-400 mt-1">Spring AI Vector similarity queries with a custom high-throughput Redis lookup cache layer.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">Target Week: W5 - W6</span>
+                            <input type="checkbox" id="capstone-2-check" onchange="toggleCapstone(2)" class="w-4 h-4 text-violet-600 bg-slate-800 rounded border-slate-700">
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">Capstone 3</span>
+                            <h4 class="font-bold text-sm text-white mt-1">Non-Blocking Data Pipe</h4>
+                            <p class="text-xs text-slate-400 mt-1">Spring WebFlux reactive loops, MongoDB R2DBC driver engines, and Grafana stream tracing.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">Target Week: W9 - W10</span>
+                            <input type="checkbox" id="capstone-3-check" onchange="toggleCapstone(3)" class="w-4 h-4 text-emerald-600 bg-slate-800 rounded border-slate-700">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Day Roadmap Explorer Controller -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-extrabold text-base text-white tracking-wide flex items-center gap-2">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                            70-Day Matrix Dashboard
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Switch weeks to log your daily morning, afternoon, and evening objectives.</p>
+                    </div>
+                    
+                    <!-- Week Picker Buttons -->
+                    <div class="flex flex-wrap items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80">
+                        <script>
+                            for(let w=1; w<=10; w++) {
+                                document.write(`<button onclick="setActiveWeek(${w})" id="week-tab-${w}" class="week-tab px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">W${w}</button>`);
+                            }
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Active Week Info Header -->
+                <div class="px-6 py-3 bg-indigo-950/20 border-b border-slate-800 flex items-center justify-between text-xs" id="week-info-bar">
+                    <span class="font-bold text-indigo-300 uppercase tracking-wider" id="current-phase-label">Phase 1: Foundations (Week 1)</span>
+                    <span class="text-slate-400 font-medium" id="current-phase-desc">Building language basics, sliding windows, and raw web server configuration models.</span>
+                </div>
+
+                <!-- Day Cards Output Container -->
+                <div id="days-container" class="p-6 space-y-4 max-h-[500px] overflow-y-auto"></div>
+            </div>
+
+            <!-- Curated Recommended Video Courses Checklist -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    High-Yield Curated Placement Reference Videos
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-start justify-between p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                        <div>
+                            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">Premium Course Option</span>
+                            <h4 class="font-bold text-sm text-white">Spring Boot 3, Spring 6 & Hibernate for Beginners (Chad Darby)</h4>
+                            <p class="text-xs text-slate-400 mt-1">Excellent structured video deep-dive on Dependency Injection, Bean lifecycles, and core Hibernate entity structures.</p>
+                        </div>
+                        <input type="checkbox" id="course-1-check" onchange="toggleCourse(1)" class="w-4.5 h-4.5 text-indigo-600 bg-slate-800 rounded border-slate-700 mt-1 ml-4 flex-shrink-0">
+                    </div>
+                    <div class="flex items-start justify-between p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                        <div>
+                            <span class="text-[10px] font-bold text-teal-400 uppercase tracking-wide">Comprehensive Alternative</span>
+                            <h4 class="font-bold text-sm text-white">Java Spring Framework 6 with Spring Boot 3 (Naveen Reddy / Telusko)</h4>
+                            <p class="text-xs text-slate-400 mt-1">46 Hours of detailed code-from-scratch videos mapping REST APIs, security loops, and production deployments.</p>
+                        </div>
+                        <input type="checkbox" id="course-2-check" onchange="toggleCourse(2)" class="w-4.5 h-4.5 text-teal-600 bg-slate-800 rounded border-slate-700 mt-1 ml-4 flex-shrink-0">
+                    </div>
+                    <div class="flex items-start justify-between p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                        <div>
+                            <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wide">Full-Stack Project Build</span>
+                            <h4 class="font-bold text-sm text-white">Java Spring Boot Full Stack: eCommerce Project Masterclass (EmbarkX)</h4>
+                            <p class="text-xs text-slate-400 mt-1">93 Hours of masterclass videos spanning REST patterns, JWT tokens, Spring Security, and Cloud workflows.</p>
+                        </div>
+                        <input type="checkbox" id="course-3-check" onchange="toggleCourse(3)" class="w-4.5 h-4.5 text-amber-600 bg-slate-800 rounded border-slate-700 mt-1 ml-4 flex-shrink-0">
+                    </div>
+                    <div class="flex items-start justify-between p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                        <div>
+                            <span class="text-[10px] font-bold text-red-400 uppercase tracking-wide">Free Microservices Specialization</span>
+                            <h4 class="font-bold text-sm text-white">Monolithic to Microservices Ecosystem Masterclass (EmbarkX YouTube)</h4>
+                            <p class="text-xs text-slate-400 mt-1">21+ Hours focused exclusively on migrating a standard app monolith into independent, decoupled cloud services via Gateway routes.</p>
+                        </div>
+                        <input type="checkbox" id="course-4-check" onchange="toggleCourse(4)" class="w-4.5 h-4.5 text-red-600 bg-slate-800 rounded border-slate-700 mt-1 ml-4 flex-shrink-0">
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Custom In-App Toast Container -->
+    <div id="custom-toast-container" class="fixed bottom-6 right-6 z-55 flex flex-col gap-3 max-w-sm pointer-events-none"></div>
+
+    <!-- Add Reminder Modal Box Overlay -->
+    <div id="reminder-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h4 class="text-lg font-bold text-white mb-2">Create Custom Target Goal</h4>
+            <p class="text-xs text-slate-400 mb-4">Add a specialized task. Checked objectives calculate directly into your dashboard's metric tracking loops.</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Goal / Reminder Title</label>
+                    <input type="text" id="modal-reminder-text" placeholder="e.g., Code 3 Sliding Window LeetCode Medium problems" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Priority Setting</label>
+                    <select id="modal-reminder-priority" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="high">High - Immediate Focus</option>
+                        <option value="medium">Medium - Standard Core</option>
+                        <option value="low">Low - Optional Review</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center justify-end gap-2">
+                <button onclick="closeReminderModal()" class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">Cancel</button>
+                <button onclick="saveCustomReminder()" class="px-4 py-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg">Add to Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Clear Workspace Modal Overlay -->
+    <div id="reset-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <div class="text-red-500 bg-red-500/10 border border-red-500/20 p-3 rounded-xl inline-block mb-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h4 class="text-lg font-bold text-white mb-2">Reset All Roadmap Progress?</h4>
+            <p class="text-xs text-slate-400 mb-6">This will wipe out all day checklists, completed video courses, and custom reminder nodes from your local storage engine. This action cannot be undone.</p>
+            <div class="flex items-center justify-end gap-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">No, Cancel</button>
+                <button onclick="executeResetData()" class="px-4 py-2 text-xs bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg">Yes, Clear Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            checkedTasks: {},
+            capstones: { 1: false, 2: false, 3: false },
+            courses: { 1: false, 2: false, 3: false, 4: false },
+            customReminders: [
+                { id: 'rem-1', text: 'Daily LeetCode Challenge (Java Collections)', priority: 'high', checked: true },
+                { id: 'rem-2', text: 'Analyze Custom Spring Bean Dependency scopes', priority: 'medium', checked: false },
+                { id: 'rem-3', text: 'Commit all sandbox code repos to GitHub portfolio', priority: 'high', checked: false }
+            ]
+        };
+
+        const PHASES_INFO = [
+            { num: 1, name: "Phase 1: Foundations", weeks: [1, 2], desc: "Arrays, Strings, Two-Pointer Sliding Windows, Servlets on Tomcat & Core Java Memory optimization strategies." },
+            { num: 2, name: "Phase 2: Core Structures & Spring", weeks: [3, 4], desc: "Linked Lists, Stacks, Queues, Backtracking, Core Spring framework IoC containers & Data JPA engines." },
+            { num: 3, name: "Phase 3: Security & Parallelism", weeks: [5, 6], desc: "Trees, Heaps, Basic Graphs, Custom JWT authentication middleware, Thread pools, and Project Loom Virtual Threads." },
+            { num: 4, name: "Phase 4: Distributed Cloud", weeks: [7, 8], desc: "Advanced Graphs, Greedy routing algorithms, Spring Cloud API Gateways, Apache Kafka event handling, and multi-stage Docker engines." },
+            { num: 5, name: "Phase 5: Design Patterns & HLD", weeks: [9, 10], desc: "2D Dynamic Programming algorithms, HLD scaling matrices, LLD structural design patterns, and full mock test loops." }
+        ];
+
+        const ROADMAP_DATA = {
+            1: { dsa: "Arrays memory allocation & runtime complexity bounds ($O(1)$ reads vs $O(N)$ lookups). Solve reverse array and maximum element bounds.", backend: "Initialize multi-module Maven parent POM structure configurations. Verify compiler compliance settings." },
+            2: { dsa: "Subarray search mechanics using two-pointer strategy. Practice Container with Most Water on LeetCode.", backend: "Deep-dive Core Java Collections Framework benchmarks: ArrayList vs LinkedList heap sizing variants." },
+            3: { dsa: "Sliding window fixed size operations. Solve Max Consecutive Ones III with dynamic window expansion boundaries.", backend: "Setup Apache Tomcat server environment locally. Hand-compile raw sample Java Web Servlets." },
+            4: { dsa: "Two-pointer optimal sorting bounds. Practice 3Sum and Valid Palindrome on LeetCode.", backend: "Construct an asynchronous pipeline custom filter engine chain utilizing raw Servlet API specifications." },
+            5: { dsa: "String manipulation and internal memory buffers. Explore String vs StringBuilder allocations under high loops.", backend: "Deep-dive Java Generics: Type erasure mechanisms, Upper bounded and Lower bounded wildcard implementations." },
+            6: { dsa: "Classic Sorting algorithm mechanics. Write clean Quicksort and Mergesort engines from raw blueprints.", backend: "Deconstruct Maven lifecycle execution phases: Verify plug-ins, custom packing targets, and target profile maps." },
+            7: { dsa: "Sliding window with dynamic HashMap mappings. Solve Longest Substring Without Repeating Characters.", backend: "Implement granular localized logging filters using structural Logback configurations across standard output profiles." },
+            8: { dsa: "Two-pointer arrays partitions. Practice Merge Sorted Arrays without allocating external memory buffers.", backend: "Java Memory Model structures: Stack frames vs Heap generational garbage collection layouts." },
+            9: { dsa: "Sliding window string indexing boundaries. Solve Minimum Window Substring under $O(N)$ runtime limits.", backend: "Explore Java Reflection API fundamentals: Dynamic class instantiation and runtime attribute inspection variables." },
+            10: { dsa: "String rotation and pattern matching formulas. Code basic substring detection loops.", backend: "Build a parameter-driven Servlet controller that implements runtime query string regex parsing patterns." },
+            11: { dsa: "Array partition lookup optimizations. Solve Product of Array Except Self without utilizing division operations.", backend: "Configure enterprise Git branching paradigms: Create branch permissions, rebase configurations, and target pull standards." },
+            12: { dsa: "Sliding window condition tracking. Practice Subarray Product Less Than K on LeetCode.", backend: "Analyze raw raw incoming HTTP request anatomy: Body limits, multipart stream payloads, and cookie headers inside servlets." },
+            13: { dsa: "Array matrix transformations and coordinates. Practice Spiral Matrix execution steps.", backend: "Build a low-overhead localized security authorization filter intercepting incoming Tomcat requests." },
+            14: { dsa: "Phase 1 Strategy Review: Re-solve missteps from your sliding window tracking lists from the past 13 days.", backend: "Phase 1 Capstone validation: Deploy raw Servlet API-driven endpoints implementing complete CRUD paradigms." },
+            15: { dsa: "Singly Linked List tracking logic. Code a node-reversal engine inside iterative loops.", backend: "Spring Core IoC Framework: Construct an XML-free ApplicationContext initialization pipeline." },
+            16: { dsa: "Doubly Linked List node manipulation. Code a fully featured LRU Cache using linked structures.", backend: "Spring Dependency Injection patterns: Constructor-driven vs setter-driven bean lifecycle dependencies." },
+            17: { dsa: "Linked list loop tracking mechanics. Implement Floyd's Tortoise and Hare cycle detection algorithm.", backend: "Spring Bean Lifecycles: Customize initialization hooks and destruction triggers using @PostConstruct scopes." },
+            18: { dsa: "Stack structural logic with fixed arrays. Solve Min Stack supporting $O(1)$ lookups on element lower bounds.", backend: "Connect to enterprise PostgreSQL engine instances. Establish transactional schema generation boundaries." },
+            19: { dsa: "Stack syntax string parsing models. Solve Valid Parentheses utilizing clean linear tracking approaches.", backend: "Build a raw JDBC abstraction client that manages transaction isolation boundaries manually." },
+            20: { dsa: "Queue ring-buffer implementations. Practice Design Circular Queue using fixed indices.", backend: "Spring Boot 3 Bootstrapping: Analyze autoconfiguration metadata definitions and filter configurations." },
+            21: { dsa: "Linked list pointer alterations. Solve Swap Nodes in Pairs using standard tracking elements.", backend: "Expose basic Spring Boot @RestController endpoints returning structured JSON formatting representations." },
+            22: { dsa: "Recursion parameters and call-stack limits. Implement memoization routines for mathematical operations.", backend: "Spring Data JPA mapping configurations: Map core entities to primary database tables." },
+            23: { dsa: "Backtracking permutations search paradigms. Solve Permutations of an integer array.", backend: "Configure Hibernate engine logging targets to trace SQL query performance variables directly in the log console." },
+            24: { dsa: "Backtracking subset generation models. Solve Subsets on LeetCode without creating duplicates.", backend: "Database Schema Migrations: Configure Flyway migration scripts tracking automated structural updates." },
+            25: { dsa: "Stack evaluation engines. Solve Evaluate Reverse Polish Notation using iterative stack parsing loops.", backend: "Build granular Spring Data JPA query routines leveraging JPQL syntax definitions.", },
+            26: { dsa: "Backtracking board constraints. Map core structural branches for solving N-Queens step routines.", backend: "Eliminate N+1 query overhead hazards by implementing Join Fetch query methods inside JPA data interfaces.", },
+            27: { dsa: "Recursive sequence partition models. Practice Palindrome Partitioning on input strings.", backend: "Implement server-side pagination and sorting paradigms utilizing Pageable Spring Data attributes.", },
+            28: { dsa: "Phase 2 DSA structural consolidation: Re-verify Backtracking limits across complex tree targets.", backend: "Deliver Phase 2 Milestones: Expose robust Spring Boot Data JPA transactional REST endpoints.", },
+            29: { dsa: "Binary Tree leaf traversals. Solve Maximum Depth of Binary Tree using recursion parameters.", backend: "Spring Security 6 Architecture: Implement custom SecurityFilterChain beans across endpoints." },
+            30: { dsa: "Iterative Binary Tree traversals. Code Pre-order, In-order, and Post-order loops using manual stacks.", backend: "Configure Spring Security user-details persistence using encrypted database user credentials.", },
+            31: { dsa: "Binary Search Tree properties. Solve Validate Binary Search Tree using node range checks.", backend: "Java Concurrency models: Build concurrent execution boundaries using Callable structures and Future trackers.", },
+            32: { dsa: "Tree level order traversals. Solve Binary Tree Level Order Traversal using standard Queue tracking loops.", backend: "Analyze enterprise ExecutorService thread pools: Tunable sizes, max parameters, and task rejection handlers.", },
+            33: { dsa: "Binary tree path constraints. Solve Path Sum II by collecting backtracked path histories.", backend: "Project Loom Deep-dive: Provision high-scale lightweight user-mode Virtual Threads via unified executors.", },
+            34: { dsa: "Binary Search Tree structural alterations. Solve Delete Node in a BST balancing target branches.", backend: "Build specialized stateless JWT generation filters with cryptographic signing configurations.", },
+            35: { dsa: "Priority Queues and Binary Heaps. Solve Kth Largest Element in an Array under $O(N \\log K)$ tracking limits.", backend: "Profile Virtual Thread execution blocks: Track carrier thread pinning during synchronization bottlenecks.", },
+            36: { dsa: "Heap streaming boundaries. Solve Find Median from Data Stream by balancing min-heaps and max-heaps.", backend: "JUnit 5 Core Architectures: Write isolated business logic tests using appropriate assertions.", },
+            37: { dsa: "Graph topology mapping. Implement Adjacency Matrix vs Adjacency List memory footprint calculations.", backend: "Mockito Isolation Frameworks: Implement mock annotations, stub methods, and call verifications across business layers.", },
+            38: { dsa: "Graph Breadth-First Search (BFS). Implement layer level exploration across disconnected network nodes.", backend: "Configure robust MockMvc layers to test Spring Security path rules under mock token profiles.", },
+            39: { dsa: "Graph Depth-First Search (DFS). Implement recursive path discoveries tracking visited node flags.", backend: "Testcontainers Framework integrations: Provision live Docker PostgreSQL runtime instances inside testing wrappers.", },
+            40: { dsa: "BST creation metrics. Solve Convert Sorted Array to Binary Search Tree maximizing tree balancing equations.", backend: "Configure declarative Role-Based Access Control method rules leveraging @PreAuthorize expressions.", },
+            41: { dsa: "Graph connected components. Solve Number of Islands using recursive matrix graph flood fills.", backend: "Expose production-grade health and environment metric details utilizing Spring Boot Actuator configs.", },
+            42: { dsa: "Phase 3 Tree structures consolidation: Re-solve priority queue scheduling complexities under stress environments.", backend: "Expose secured, JWT-validated production endpoints executed on top of Virtual Thread pools.", },
+            43: { dsa: "Graph Shortest Path calculations. Implement Dijkstra's Algorithm utilizing specialized min-heap structural lookups.", backend: "Microservices Architecture Models: Analyze Monolithic modular separation boundaries.", },
+            44: { dsa: "Minimum Spanning Trees. Implement Prim's Algorithm tracking minimal network node costs.", backend: "Dynamic Service Discovery: Launch and cluster decentralized Spring Cloud Eureka Server engines.", },
+            45: { dsa: "Disjoint Set Union (DSU) structures. Build path compression optimization routines to track graph cycles.", backend: "Spring Cloud API Gateway routing parameters: Setup global filters and centralized route redirection targets.", },
+            46: { dsa: "Directed Acyclic Graph topological categorization. Solve Course Schedule utilizing Kahn's algorithm patterns.", backend: "Distributed Streaming Basics: Install localized Apache Kafka event log systems.", },
+            47: { dsa: "Greedy optimization models. Solve Gas Station loop problems using localized balance accumulation indicators.", backend: "Write transaction publication templates using standardized Spring Kafka template abstractions.", },
+            48: { dsa: "Greedy interval scheduling properties. Solve Merge Intervals sorting arrays by their start indices.", backend: "Configure message listener partitions to process incoming transaction streams.", },
+            49: { dsa: "Dynamic Programming (DP) paradigms. Understand memoization vs tabulation bounds. Solve Climbing Stairs.", backend: "Containerize services using optimal, lean multi-stage production Docker files.", },
+            50: { dsa: "Advanced Topological exploration extensions. Solve Course Schedule II tracking accurate dependency arrays.", backend: "Implement failover circuit breaker strategies via Resilience4j configuration wrappers.", },
+            51: { dsa: "Greedy leap step analysis. Solve Jump Game and Jump Game II calculating maximal reachable boundaries.", backend: "Orchestrate independent localized backend containers using integrated Docker Compose configuration files.", },
+            52: { dsa: "Dynamic Programming 1D algorithms. Solve Longest Increasing Subsequence utilizing array allocation arrays.", backend: "Configure dynamic routing rules on Spring Cloud API Gateway ensuring stateless downstream JWT validation mappings.", },
+            53: { dsa: "Advanced Graph metrics. Solve Network Delay Time tracking signal delays using Dijkstra's maps.", backend: "Distributed Tracing paradigms: Centralize microservice request tracking via custom Micrometer metric hooks.", },
+            54: { dsa: "Greedy non-overlapping boundaries optimizations. Solve Non-overlapping Intervals minimizing removed elements.", backend: "Analyze data transactional boundaries across decoupled systems using custom Saga orchestration layers.", },
+            55: { dsa: "Dynamic Programming classic bounds. Solve standard 0/1 Knapsack formulation constraints.", backend: "Centralize runtime service properties leveraging external Git repositories via Spring Cloud Config frameworks.", },
+            56: { dsa: "Phase 4 Microservices validation: Verify event packet delivery when network constraints are forced.", backend: "Conduct complete local docker-compose simulations validation across your e-commerce components.", },
+            57: { dsa: "Dynamic Programming 2D coordinate matrices. Solve Unique Paths tracking path accumulation counts.", backend: "High-Level Design (HLD) Concepts: Horizontal vs vertical scaling boundaries, reverse proxy systems, and load balancing models.", },
+            58: { dsa: "Dynamic Programming 2D string matches. Solve Longest Common Subsequence tracking string alignments.", backend: "HLD Caching paradigms: Write-Through, Write-Back, and distributed Redis eviction setups.", },
+            59: { dsa: "Dynamic Programming editing transitions metrics. Solve Edit Distance calculating operations transformations.", backend: "Low-Level Design (LLD) Principles: Implement SOLID standards and code explicit abstract Factory variations.", },
+            60: { dsa: "Mock Coding Round: Practice high-pressure sliding window variations inside explicit 45-minute limits.", backend: "Integrate production monitoring solutions by configuring Prometheus to aggregate Spring Actuator data points.", },
+            61: { dsa: "Dynamic Programming linear constraints skips. Solve House Robber and House Robber II.", backend: "LLD Coding Execution: Build a complete asynchronous distributed URL Shortener system design layout.", },
+            62: { dsa: "Core algorithmic patterns catalog recap.", backend: "JVM Performance Profiling: Configure garbage collection logs, investigate memory leaks, and tune heap allocation limits.", },
+            63: { dsa: "Graph character constraints patterns. Solve Alien Dictionary matching topological node orders.", backend: "Lock production monitoring points by protecting Actuator administration targets using custom security rule overrides.", },
+            64: { dsa: "Dynamic Programming structural trees extensions. Solve Binary Tree Maximum Path Sum tracking global splits.", backend: "Deconstruct transactional proxy behaviors: Investigate why transaction self-invocation loops fail to roll back databases.", },
+            65: { dsa: "High-intensity technical test simulations: Solve three randomized medium-hard tracking targets inside 90-minute blocks.", backend: "LLD Project Execution: Implement a thread-safe, concurrent storage lookup pool without using native synchronizations.", },
+            66: { dsa: "Revisit structural edge cases around binary tree modifications and non-recursive lookup approaches.", backend: "Query Optimization Tracks: Analyze slow execution operations inside Postgres database engines by building explicit indexes.", },
+            67: { dsa: "Full Algorithmic Mock Run: Complete a comprehensive technical placement list under a strict 3-hour timer.", backend: "Conduct deep System Design review drills replicating the architectural scale challenges of high-traffic production apps.", },
+            68: { dsa: "Consolidate edge case constraints of hard-tier graph loops and dynamic programming matrix shortcuts.", backend: "Trace runtime synchronization traps, transactional deadlocks, and dynamic proxy configuration flaws.", },
+            69: { dsa: "Final Placement Preparation: Review your tracking catalog of previously failed submissions.", backend: "Host your curated production codebases publicly, compile project documentation files, and structure GitHub landing portfolios.", },
+            70: { dsa: "Blueprint Complete: Re-run localized performance checklists with complete confidence across all algorithms.", backend: "Ecosystem Deployment Complete: All backend pipelines live, fully optimized, and ready to dominate top-tier enterprise SDE interviews." }
+        };
+
+        let activeWeek = 1;
+        let timerInterval = null;
+        let timerSecondsRemaining = 0;
+        let timerLabel = "Idle";
+
+        window.onload = function() {
+            loadSavedState();
+            calculateCountdown();
+            setTimerPreset(120, "DSA Session");
+            setActiveWeek(1);
+            renderReminders();
+            renderStats();
+        }
+
+        // GOOGLE CALENDAR AUTOMATED BATCH ENGINE EXECS
+        function generateCalendarICS() {
+            let icsContent = [
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "PRODID:-//SDE Placement Cockpit//Roadmap Engine//EN",
+                "CALSCALE:GREGORIAN",
+                "METHOD:PUBLISH"
+            ];
+
+            const today = new Date();
+            const targetEndDate = new Date("2026-07-29T23:59:59");
+            let currentDayIndex = 1;
+
+            // Loop and batch construct individual ics rows day-by-day
+            for (let d = new Date(today); d <= targetEndDate; d.setDate(d.getDate() + 1)) {
+                if (currentDayIndex > 70) break;
+                
+                const data = ROADMAP_DATA[currentDayIndex] || { dsa: "DSA review algorithms.", backend: "Spring Boot core service builds." };
+                const dateStr = d.toISOString().split('T')[0].replace(/-/g, '');
+
+                // 1. Morning DSA Block (09:00 AM - 11:00 AM)
+                icsContent.push("BEGIN:VEVENT");
+                icsContent.push(`UID:dsa-block-${currentDayIndex}-2026@sdecockpit.internal`);
+                icsContent.push(`DTSTART;TZID=Asia/Kolkata:${dateStr}T090000`);
+                icsContent.push(`DTEND;TZID=Asia/Kolkata:${dateStr}T110000`);
+                icsContent.push(`SUMMARY:🌅 W${Math.ceil(currentDayIndex/7)}D${currentDayIndex} SDE: DSA Core Block`);
+                icsContent.push(`DESCRIPTION:Focus Goal: ${data.dsa.replace(/,/g, '\\,')}`);
+                icsContent.push("STATUS:CONFIRMED");
+                icsContent.push("END:VEVENT");
+
+                // 2. Afternoon Backend Block (02:00 PM - 05:00 PM)
+                icsContent.push("BEGIN:VEVENT");
+                icsContent.push(`UID:backend-block-${currentDayIndex}-2026@sdecockpit.internal`);
+                icsContent.push(`DTSTART;TZID=Asia/Kolkata:${dateStr}T140000`);
+                icsContent.push(`DTEND;TZID=Asia/Kolkata:${dateStr}T170000`);
+                icsContent.push(`SUMMARY:💻 W${Math.ceil(currentDayIndex/7)}D${currentDayIndex} SDE: Java Backend System Architecture`);
+                icsContent.push(`DESCRIPTION:Focus Goal: ${data.backend.replace(/,/g, '\\,')}`);
+                icsContent.push("STATUS:CONFIRMED");
+                icsContent.push("END:VEVENT");
+
+                // 3. Evening Review Block (08:00 PM - 09:00 PM)
+                icsContent.push("BEGIN:VEVENT");
+                icsContent.push(`UID:review-block-${currentDayIndex}-2026@sdecockpit.internal`);
+                icsContent.push(`DTSTART;TZID=Asia/Kolkata:${dateStr}T200000`);
+                icsContent.push(`DTEND;TZID=Asia/Kolkata:${dateStr}T210000`);
+                icsContent.push(`SUMMARY:🔄 W${Math.ceil(currentDayIndex/7)}D${currentDayIndex} SDE: Progress Sync & Git Log`);
+                icsContent.push("DESCRIPTION:Commit current sandbox adjustments\\, clear engineering blockers\\, and synchronize tracking state entries.");
+                icsContent.push("STATUS:CONFIRMED");
+                icsContent.push("END:VEVENT");
+
+                currentDayIndex++;
+            }
+
+            icsContent.push("END:VCALENDAR");
+            
+            // Build temporary blob payload link to prompt client download
+            const blob = new Blob([icsContent.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "SDE_Placement_Java_Roadmap_2026.ics";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification("Success! SDE Google Calendar Sync automated script generated and downloaded.", "success");
+        }
+
+        function calculateCountdown() {
+            const targetDate = new Date("2026-07-29T23:59:59");
+            const currentDate = new Date();
+            const difference = targetDate - currentDate;
+            const daysRemaining = Math.max(0, Math.floor(difference / (1000 * 60 * 60 * 24)));
+            document.getElementById("days-countdown").innerText = daysRemaining;
+        }
+
+        function getPhaseForWeek(weekNum) {
+            return PHASES_INFO.find(p => p.weeks.includes(weekNum)) || PHASES_INFO[0];
+        }
+
+        function renderWeekTabs() {
+            for(let w=1; w<=10; w++) {
+                const tab = document.getElementById(`week-tab-${w}`);
+                if(tab) {
+                    if (w === activeWeek) {
+                        tab.className = "week-tab px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-indigo-600 text-white";
+                    } else {
+                        tab.className = "week-tab px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+                    }
+                }
+            }
+        }
+
+        function setActiveWeek(weekNum) {
+            activeWeek = weekNum;
+            renderWeekTabs();
+            
+            const phase = getPhaseForWeek(weekNum);
+            document.getElementById("current-phase-label").innerText = `${phase.name} (Week ${weekNum})`;
+            document.getElementById("current-phase-desc").innerText = phase.desc;
+
+            renderDays();
+        }
+
+        function renderDays() {
+            const container = document.getElementById("days-container");
+            container.innerHTML = "";
+
+            const startDay = (activeWeek - 1) * 7 + 1;
+            const endDay = startDay + 6;
+
+            for (let day = startDay; day <= endDay; day++) {
+                const dayData = ROADMAP_DATA[day] || { dsa: "DSA Review Pattern.", backend: "Core Java/Spring backend configurations." };
+                
+                const dsaId = `day-${day}-dsa`;
+                const backendId = `day-${day}-backend`;
+                const reviewId = `day-${day}-review`;
+
+                const isDsaDone = !!state.checkedTasks[dsaId];
+                const isBackendDone = !!state.checkedTasks[backendId];
+                const isReviewDone = !!state.checkedTasks[reviewId];
+
+                const dayCard = document.createElement("div");
+                dayCard.className = `p-5 rounded-xl border transition-all ${
+                    (isDsaDone && isBackendDone && isReviewDone) 
+                        ? 'bg-slate-900/40 border-emerald-500/20 shadow-lg shadow-emerald-500/5' 
+                        : 'bg-slate-950 border-slate-800'
+                }`;
+
+                dayCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-extrabold text-indigo-400 tracking-wider uppercase">Day ${day}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">Week ${activeWeek} Matrix</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3 p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/80">
+                            <input type="checkbox" id="${dsaId}" ${isDsaDone ? 'checked' : ''} onchange="toggleTask('${dsaId}')" class="w-4 h-4 text-indigo-600 bg-slate-800 rounded border-slate-700 mt-1 flex-shrink-0">
+                            <div>
+                                <span class="text-xs font-bold text-slate-200 block">Morning Block: DSA Pattern Focus (9:00 AM - 11:00 AM)</span>
+                                <p class="text-xs text-slate-400 mt-0.5">${dayData.dsa}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/80">
+                            <input type="checkbox" id="${backendId}" ${isBackendDone ? 'checked' : ''} onchange="toggleTask('${backendId}')" class="w-4 h-4 text-emerald-600 bg-slate-800 rounded border-slate-700 mt-1 flex-shrink-0">
+                            <div>
+                                <span class="text-xs font-bold text-slate-200 block">Afternoon Block: Backend System Architecture (2:00 PM - 5:00 PM)</span>
+                                <p class="text-xs text-slate-400 mt-0.5">${dayData.backend}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/80">
+                            <input type="checkbox" id="${reviewId}" ${isReviewDone ? 'checked' : ''} onchange="toggleTask('${reviewId}')" class="w-4 h-4 text-amber-600 bg-slate-800 rounded border-slate-700 mt-1 flex-shrink-0">
+                            <div>
+                                <span class="text-xs font-bold text-slate-200 block">Evening Block: Progress Sync & Portfolio Log (8:00 PM - 9:00 PM)</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Commit sandbox adjustments, resolve edge case blockers, and update implementation logs.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(dayCard);
+            }
+        }
+
+        function toggleTask(id) {
+            state.checkedTasks[id] = document.getElementById(id).checked;
+            saveStateToStorage();
+            renderStats();
+            renderDays();
+        }
+
+        function toggleCapstone(num) {
+            state.capstones[num] = document.getElementById(`capstone-${num}-check`).checked;
+            saveStateToStorage();
+            renderStats();
+            showNotification(`Capstone target milestone status updated!`, "info");
+        }
+
+        function toggleCourse(num) {
+            state.courses[num] = document.getElementById(`course-${num}-check`).checked;
+            saveStateToStorage();
+            renderStats();
+            showNotification(`Course progression tracker synchronized!`, "success");
+        }
+
+        function renderReminders() {
+            const container = document.getElementById("reminders-list");
+            container.innerHTML = "";
+
+            state.customReminders.forEach(reminder => {
+                const priorityStyles = {
+                    high: "bg-red-500/10 text-red-400 border-red-500/30",
+                    medium: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+                    low: "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                };
+
+                const card = document.createElement("div");
+                card.className = "flex items-center justify-between p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl hover:border-slate-700/80 transition-all";
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 pr-2">
+                        <input type="checkbox" ${reminder.checked ? 'checked' : ''} onchange="toggleReminderState('${reminder.id}')" class="w-4 h-4 text-indigo-600 bg-slate-800 rounded border-slate-700 flex-shrink-0">
+                        <span class="text-xs font-medium ${reminder.checked ? 'line-through text-slate-500' : 'text-slate-300'}">${reminder.text}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <span class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border ${priorityStyles[reminder.priority]}">${reminder.priority}</span>
+                        <button onclick="deleteReminder('${reminder.id}')" class="p-1 text-slate-500 hover:text-red-400 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleReminderState(id) {
+            const rem = state.customReminders.find(r => r.id === id);
+            if (rem) {
+                rem.checked = !rem.checked;
+                saveStateToStorage();
+                renderReminders();
+                showNotification(`Target status updated: ${rem.text}`, "info");
+            }
+        }
+
+        function openReminderModal() { document.getElementById("reminder-modal").classList.remove("hidden"); }
+        function closeReminderModal() {
+            document.getElementById("reminder-modal").classList.add("hidden");
+            document.getElementById("modal-reminder-text").value = "";
+            document.getElementById("modal-reminder-priority").value = "high";
+        }
+
+        function saveCustomReminder() {
+            const text = document.getElementById("modal-reminder-text").value.trim();
+            const priority = document.getElementById("modal-reminder-priority").value;
+
+            if (!text) {
+                showNotification("Please supply clear target specifications.", "warning");
+                return;
+            }
+
+            state.customReminders.push({ id: `rem-${Date.now()}`, text: text, priority: priority, checked: false });
+            saveStateToStorage();
+            renderReminders();
+            closeReminderModal();
+            showNotification(`Target added to workspace hub!`, "success");
+        }
+
+        function deleteReminder(id) {
+            state.customReminders = state.customReminders.filter(r => r.id !== id);
+            saveStateToStorage();
+            renderReminders();
+            showNotification("Target purged from notification dashboard.", "info");
+        }
+
+        function renderStats() {
+            const totalScheduledTasksCount = 210;
+            let completedScheduledCount = 0;
+            let completedDsa = 0;
+            let completedBackend = 0;
+
+            for (let d = 1; d <= 70; d++) {
+                if (state.checkedTasks[`day-${d}-dsa`]) { completedScheduledCount++; completedDsa++; }
+                if (state.checkedTasks[`day-${d}-backend`]) { completedScheduledCount++; completedBackend++; }
+                if (state.checkedTasks[`day-${d}-review`]) { completedScheduledCount++; }
+            }
+
+            document.getElementById("checked-tasks-count").innerText = `${completedScheduledCount}/${totalScheduledTasksCount}`;
+            const percentage = Math.round((completedScheduledCount / totalScheduledTasksCount) * 100);
+            document.getElementById("progress-percentage-text").innerText = `${percentage}%`;
+            document.getElementById("overall-progress-bar").style.width = `${percentage}%`;
+
+            document.getElementById("dsa-progress-text").innerText = `${Math.round((completedDsa / 70) * 100)}%`;
+            document.getElementById("backend-progress-text").innerText = `${Math.round((completedBackend / 70) * 100)}%`;
+            document.getElementById("radial-progress-container").style.background = `conic-gradient(#6366f1 ${percentage * 3.6}deg, #1e293b 0deg)`;
+
+            renderPhaseChecklist();
+        }
+
+        function renderPhaseChecklist() {
+            const listContainer = document.getElementById("phases-status-list");
+            listContainer.innerHTML = "";
+
+            PHASES_INFO.forEach(phase => {
+                const startDay = (phase.weeks[0] - 1) * 7 + 1;
+                const endDay = phase.weeks[1] * 7;
+                let phaseTotal = 14 * 3;
+                let phaseCompletedCount = 0;
+
+                for (let d = startDay; d <= endDay; d++) {
+                    if (state.checkedTasks[`day-${d}-dsa`]) phaseCompletedCount++;
+                    if (state.checkedTasks[`day-${d}-backend`]) phaseCompletedCount++;
+                    if (state.checkedTasks[`day-${d}-review`]) phaseCompletedCount++;
+                }
+
+                const phaseDonePercent = Math.round((phaseCompletedCount / phaseTotal) * 100);
+                const isFullyDone = phaseDonePercent === 100;
+
+                const row = document.createElement("div");
+                row.className = "flex items-center justify-between py-1 border-b border-slate-800/40 last:border-none";
+                row.innerHTML = `
+                    <span class="text-slate-300 font-medium truncate max-w-[190px] ${isFullyDone ? 'text-indigo-400' : ''}">${phase.name}</span>
+                    <span class="font-mono text-[11px] px-1.5 py-0.5 rounded ${isFullyDone ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800/80 text-slate-400'}">${phaseDonePercent}%</span>
+                `;
+                listContainer.appendChild(row);
+            });
+        }
+
+        function setTimerPreset(minutes, label) {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            timerSecondsRemaining = minutes * 60;
+            timerLabel = label;
+            updateTimerDisplay();
+            document.getElementById("timer-toggle-btn").innerText = "Start Focus";
+            document.getElementById("timer-toggle-btn").className = "flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-sm transition-all";
+            document.getElementById("timer-active-label").innerText = `Preset: ${label}`;
+        }
+
+        function toggleTimer() {
+            const toggleBtn = document.getElementById("timer-toggle-btn");
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                toggleBtn.innerText = "Resume Focus";
+                toggleBtn.className = "flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-semibold text-sm transition-all";
+                document.getElementById("timer-active-label").innerText = `Paused: ${timerLabel}`;
+                showNotification("Session timer paused.", "info");
+            } else {
+                if (timerSecondsRemaining <= 0) { showNotification("Please choose a timer preset.", "warning"); return; }
+                toggleBtn.innerText = "Pause Session";
+                toggleBtn.className = "flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-semibold text-sm transition-all";
+                document.getElementById("timer-active-label").innerText = `Focusing: ${timerLabel}`;
+                showNotification(`Focus window locked for ${timerLabel}! Let's build.`, "success");
+
+                timerInterval = setInterval(() => {
+                    timerSecondsRemaining--;
+                    updateTimerDisplay();
+                    if (timerSecondsRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        toggleBtn.innerText = "Start Focus";
+                        toggleBtn.className = "flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-sm transition-all";
+                        document.getElementById("timer-active-label").innerText = "Idle";
+                        showNotification(`Incredible work! Your ${timerLabel} block is finished. Log your results.`, "success");
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() { setTimerPreset(120, "DSA Session"); }
+        function updateTimerDisplay() {
+            const h = Math.floor(timerSecondsRemaining / 3600);
+            const m = Math.floor((timerSecondsRemaining % 3600) / 60);
+            const s = timerSecondsRemaining % 60;
+            const pad = (n) => String(n).padStart(2, "0");
+            document.getElementById("timer-display").innerText = `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+
+        function openResetModal() { document.getElementById("reset-modal").classList.remove("hidden"); }
+        function closeResetModal() { document.getElementById("reset-modal").classList.add("hidden"); }
+        function executeResetData() {
+            localStorage.removeItem("sde_blueprint_progress_2026");
+            state = { checkedTasks: {}, capstones: { 1: false, 2: false, 3: false }, courses: { 1: false, 2: false, 3: false, 4: false }, customReminders: [] };
+            closeResetModal();
+            setActiveWeek(1);
+            renderReminders();
+            renderStats();
+            showNotification("Workspace data successfully cleared.", "info");
+        }
+
+        function saveStateToStorage() { localStorage.setItem("sde_blueprint_progress_2026", JSON.stringify(state)); }
+        function loadSavedState() {
+            const saved = localStorage.getItem("sde_blueprint_progress_2026");
+            if (saved) { state = JSON.parse(saved); }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchor = document.createElement("a");
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "sde_placement_cockpit_backup.json");
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && typeof parsed === 'object') {
+                        state = parsed;
+                        saveStateToStorage();
+                        setActiveWeek(activeWeek);
+                        renderReminders();
+                        renderStats();
+                        showNotification("Workspace state restored from backup!", "success");
+                    }
+                } catch(err) { showNotification("Failed to parse backup template.", "warning"); }
+            };
+            reader.readAsText(file);
+        }
+
+        function showNotification(msg, type = "success") {
+            const container = document.getElementById("custom-toast-container");
+            const toast = document.createElement("div");
+            const styles = {
+                success: { bg: "bg-slate-900 border-emerald-500/30 text-emerald-400", icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+                info: { bg: "bg-slate-900 border-indigo-500/30 text-indigo-400", icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+                warning: { bg: "bg-slate-900 border-amber-500/30 text-amber-400", icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>` }
+            };
+            const c = styles[type] || styles.success;
+            toast.className = `flex items-start gap-3 p-4 rounded-xl border ${c.bg} shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<div class="flex-shrink-0 mt-0.5">${c.icon}</div><div class="flex-grow"><p class="text-xs font-semibold text-slate-200">${msg}</p></div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
+            setTimeout(() => { toast.classList.add("translate-y-2", "opacity-0"); setTimeout(() => toast.remove(), 300); }, 4500);
+        }
+    </script>
+    // Replace your old saveStateToStorage and loadSavedState with this:
+const SYNC_KEY = "krishiv_sde_tracker_2026";
+
+function saveStateToStorage() {
+    // 1. Keep local copy active
+    localStorage.setItem("sde_blueprint_progress_2026", JSON.stringify(state));
+    
+    // 2. Broadcast to free anonymous cloud synchronization pool
+    fetch(`https://kvdb.io/MN87yT6pXwZq9asdfghjkl/${SYNC_KEY}`, {
+        method: 'POST',
+        body: JSON.stringify(state)
+    }).catch(err => console.log("Syncing offline, changes saved locally."));
+}
+
+function loadSavedState() {
+    // Load local cache first for instant startup speed
+    const saved = localStorage.getItem("sde_blueprint_progress_2026");
+    if (saved) { state = JSON.parse(saved); }
+    
+    // Fetch latest live remote updates from your phone/PC sessions
+    fetch(`https://kvdb.io/MN87yT6pXwZq9asdfghjkl/${SYNC_KEY}`)
+        .then(res => res.json())
+        .then(remoteState => {
+            if (remoteState && remoteState.checkedTasks) {
+                state = remoteState;
+                localStorage.setItem("sde_blueprint_progress_2026", JSON.stringify(state));
+                renderStats();
+                renderReminders();
+                renderDays();
+            }
+        }).catch(err => console.log("Running in offline mode."));
+}
+</body>
+</html>
